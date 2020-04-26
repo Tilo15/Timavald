@@ -4,8 +4,9 @@ from Timavald.TrustSet import TrustSet
 from Timavald.TimeSignature import TimeSignature
 
 from nacl.signing import SigningKey
+from nacl.signing import VerifyKey
 
-store = DiskStore("store")
+store = DiskStore("store2")
 
 # Generate 10 signing keys for the time signatures
 signature_keys = [SigningKey.generate() for i in range(10)]
@@ -24,3 +25,10 @@ print("Saved: ", store.update_trust_set(trust_set_private_key.verify_key, trust_
 
 network = Network(store)
 
+print("Key: {}".format(trust_set_private_key.verify_key.encode().hex()))
+# print(trust_set_private_key.verify_key.encode())
+# kt = VerifyKey(bytes.fromhex(trust_set_private_key.verify_key.encode().hex()))
+# tst = store.get_trust_set(kt)
+# print("Self-test passed")
+# print(tst.serialise())
+# print(trust_set.serialise())

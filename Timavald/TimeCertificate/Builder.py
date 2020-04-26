@@ -9,13 +9,14 @@ from typing import Set
 
 class TimeCertificateBuilder:
 
-    def __init__(self, trust_set: TrustSet, trust_set_key: VerifyKey, timeout: int = -1):
+    def __init__(self, trust_set: TrustSet, trust_set_key: VerifyKey, digest: bytes, timeout: int = -1):
         # Save the paramaters
         self.trust_set = trust_set
         self.trust_set_key = trust_set_key
         self.timeout = timeout
         self.signatures: Set[TimeSignature] = set()
         self.result = Subject()
+        self.digest = digest
 
         if(self.timeout == -1):
             self.timeout = trust_set.maximum_deviation
@@ -28,6 +29,7 @@ class TimeCertificateBuilder:
         if(self.__timer == None):
             # No, create it
             self.__timer = Timer(self.timeout, self.__finalise)
+            self.__timer.start()
 
         # Have we timed out?
         if(self.__complete):
@@ -64,11 +66,11 @@ class TimeCertificateBuilder:
 
         # Verify the certificate
         try:
-            certificate.validate()
+            certificate.validate(self.digest)
         except Exception as e:
             self.result.on_error(e)
             return
 
         # Send to the observer
         self.result.on_next(certificate)
-        self.result.on_complete(certificate)
+        self.result.on_completed()

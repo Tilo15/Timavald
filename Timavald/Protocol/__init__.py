@@ -38,10 +38,11 @@ class Protocol:
     def handle_request(self, stream: IngressStream):
         # New connection, see what they want
         command = stream.read(4)
+        print(command)
 
         if(command == Protocol.REQUEST_TRUST_SET):
             # Trust set requested, get the public key
-            public_key = VerifyKey(strem.read(32))
+            public_key = VerifyKey(stream.read(32))
 
             # Certificate requested, do we have it?
             if(self.store.has_trust_set(public_key)):
@@ -54,11 +55,11 @@ class Protocol:
                     self.send_response(trust_set.serialise(), egress)
 
                 # Reply to the request
-                self.instance.establish_stream(stream.origin, stream.id).subscribe(established)
+                self.instance.establish_stream(stream.origin, in_reply_to = stream.id).subscribe(established)
 
         elif(command == Protocol.REQUEST_SIGNATURE):
             # Signature requested, get the public key
-            public_key = VerifyKey(strem.read(32))
+            public_key = VerifyKey(stream.read(32))
             
             # Get the message hash
             digest = stream.read(64)
@@ -77,16 +78,17 @@ class Protocol:
                     self.send_response(signature.serialise(), egress)
 
                 # Reply to the request
-                self.instance.establish_stream(stream.origin, stream.id).subscribe(established)
+                self.instance.establish_stream(stream.origin, in_reply_to = stream.id).subscribe(established)
 
                     
     def send_response(self, data: bytes, stream: EgressStream):
         size = len(data)
         stream.write(b"OK" + struct.pack("!I", size) + data)
+        print("Sending {} bytes".format(size))
         stream.close()
 
     def read_response(self, stream: IngressStream):
-        if(strem.read(2) != "OK"):
+        if(stream.read(2) != b"OK"):
             raise IOError("Peer returned bad response")
 
         size = struct.unpack("!I", stream.read(4))[0]
@@ -111,7 +113,7 @@ class Protocol:
             trust_set = TrustSet.deserialise(self.read_response(stream), key)
 
             # Update our local copy of it
-            self.store.update_trust_set(trust_set)
+            self.store.update_trust_set(key, trust_set)
 
             # Return the response
             subject.on_next(ProtocolResult(trust_set))
@@ -135,9 +137,9 @@ class Protocol:
         def peer_found(peer):
             # Notify subject
             subject.on_next(ProtocolEvent(ProtocolEvent.EVENT_ESTABLISHING_CONNECTION))
-
+            
             # Establish connection
-            self.instance.establish_stream(peer).on_next(peer_connected)
+            self.instance.establish_stream(peer).subscribe(peer_connected)
 
 
         # Find peers with the trust set
@@ -191,7 +193,7 @@ class Protocol:
             subject.on_next(ProtocolEvent(ProtocolEvent.EVENT_ESTABLISHING_CONNECTION))
 
             # Establish connection
-            self.instance.establish_stream(peer).on_next(peer_connected)
+            self.instance.establish_stream(peer).subscribe(peer_connected)
 
 
         # Find peer with the signing key

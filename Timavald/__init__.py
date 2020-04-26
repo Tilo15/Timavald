@@ -28,7 +28,7 @@ class Network:
         # Handle trust set
         def on_trust_set(trust_set: TrustSet):
             # Create a TimeCertificateBuilder to handle this request
-            builder = TimeCertificateBuilder(trust_set, trust_set_key)
+            builder = TimeCertificateBuilder(trust_set, key, digest)
 
             # Hook up the result to our subject
             builder.result.subscribe(subject.on_next, subject.on_error, subject.on_completed)
@@ -42,9 +42,9 @@ class Network:
                     self.__print_event(event)
 
             # Iterate over the valid public keys
-            for key in trust_set.valid_keys:
+            for public_key in trust_set.valid_keys:
                 # Request a signature
-                self.protocol.request_signature(key, digest).subscribe(handle_sig_events)
+                self.protocol.request_signature(public_key, digest).subscribe(handle_sig_events)
 
 
         def handle_tsr_events(event: ProtocolEvent):
@@ -74,7 +74,7 @@ class Network:
     
 
     __event_messages = {
-        ProtocolEvent.EVENT_ESTABLISHING_CONNECTION: "Establishing stream to remote peer",
+        ProtocolEvent.EVENT_ESTABLISHING_CONNECTION: "Establishing stream with remote peer",
         ProtocolEvent.EVENT_SEARCHING_FOR_PEERS: "Looking for matching peers",
         ProtocolEvent.EVENT_REQUESTING_FROM_PEER: "Sending request to peer",
         ProtocolEvent.EVENT_AWAITING_RESPONSE: "Waiting for peer to respond",

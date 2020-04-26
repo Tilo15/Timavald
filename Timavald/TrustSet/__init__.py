@@ -69,6 +69,6 @@ class TrustSet:
         name = buffer.read().decode("UTF-8")
 
         # Create the trust set
-        return TrustSet(name, valid_from, valid_to, keys, required_signatures, maximum_deviation, signature)
+        return TrustSet(name, valid_from, valid_to, keys, required_signatures, maximum_deviation, data[8:])
 
         

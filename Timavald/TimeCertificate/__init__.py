@@ -7,6 +7,7 @@ from nacl.signing import VerifyKey
 
 import struct
 import zlib
+import hashlib
 
 class TimeCertificate:
 
