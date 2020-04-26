@@ -37,6 +37,7 @@ class Network:
             def handle_sig_events(event: ProtocolEvent):
                 if(event.type == ProtocolEvent.EVENT_RESPONDED):
                     builder.add_signature(event.result)
+                    print("Signature received from peer")
 
                 else:
                     self.__print_event(event)
